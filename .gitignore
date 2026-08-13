@@ -90,3 +90,9 @@ tmtags
 # valgrind
 *.valgrind
 *.log
+TrackingProduction/log/*
+TrackingProduction/*.txt
+TpcProduction/log/*
+TpcProduction/*.txt
+*.png
+TpcProduction/Fun4All_raw_hit_TPC_reco_Work.C
