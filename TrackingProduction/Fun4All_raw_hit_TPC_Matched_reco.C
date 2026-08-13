@@ -45,10 +45,12 @@
 #include <tpctrackreco/Tpc_PolyTrackReco.h>
 #include <tpctrackreco/Tpc_PolyTrackVertexer.h>
 
+
 #include <trackingdiagnostics/Tpc_AssembledTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_ModuleTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterResiduals.h>
+//#include <trackingdiagnostics/TrkrClusterDisplay.h>
 #include <trackingdiagnostics/TrackResiduals.h>
 
 R__LOAD_LIBRARY(libfun4all.so)
@@ -120,7 +122,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   const std::string dsttype = "STREAMING_EVENT";
   const std::string dsttype_to_save = "TPC";
 
-  G4TPC::sampa_tzero_bias = 0;
+  G4TPC::sampa_tzero_bias = -65;
 
   // First order corrections will be applied from PHGarfield
   G4TPC::ENABLE_MODULE_EDGE_CORRECTIONS = false;
@@ -240,7 +242,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
 
   for (int felix = 0; felix < 6; felix++)
   {
-    Mvtx_HitUnpacking(std::to_string(felix));
+    //Mvtx_HitUnpacking(std::to_string(felix));
   }
   for (int server = 0; server < 8; server++)
   {
@@ -289,6 +291,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   finder_svx->setBeamLineCut(1);
   finder_svx->setTrackQualityCut(500);
   finder_svx->setNmvtxRequired(3);
+  //finder_svx->setNinttRequired(2);
   finder_svx->setOutlierPairCut(0.1);
   finder_svx->setTrackMapName("SiliconSvtxTrackMap");
   finder_svx->setVertexMapName("SiliconSvtxVertexMap");
@@ -300,7 +303,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   se->registerSubsystem(new Tpc_AssembledTrackReco());  // makes TPC_ASSEMBLEDTRACKS
 
   auto *crossingFinder = new TpcCrossingFinder();
-  crossingFinder->Verbosity(0);
+  crossingFinder->Verbosity(10);
   crossingFinder->setInputNodeName("TPC_ASSEMBLEDTRACKS");
   crossingFinder->setOutputNodeName("TPC_CROSSING_DECISIONS");
   crossingFinder->setVertexMapNodeName("SiliconSvtxVertexMap");  // optional, configurable
@@ -308,13 +311,19 @@ void Fun4All_raw_hit_TPC_Matched_reco(
 
   auto *cluster = new Tpc_PolyClusterizer();  // makes TPC_POLYCLUSTERS
   cluster->setUseSurveyGeometry(false);
+  cluster->Verbosity(10);
+  cluster->setMaxAcceptedTier(2);
   cluster->setKEffSide0(1.00);  // OO 82626 - 4.5, AuAu 6x6 76905 -0, pp 79513 - 1.0, 75391 5.8 75405 4.8
   cluster->setKEffSide1(1.60);  // OO 82626 - 5.0, AuAu 6x6 76905 -0, pp 79513 - 1.6, 75391 5.6 75408 4.8
   se->registerSubsystem(cluster);
 
+
   se->registerSubsystem(new Tpc_PolyTrackReco());      // makes TPC_POLYTRACKS
   se->registerSubsystem(new Tpc_PolyTrackVertexer());  // makes TPC_POLYTRACKVERTICES
 
+  se->registerSubsystem(new Tpc_PolyClusterDisplay("Tpc_PolyClusterDisplay", "tpc_poly_cluster_display_" + outfilename + "_" + std::to_string(runnumber) + ".root"));
+
+//==========================================================================
   se->registerSubsystem(new TpcPolyTrackSeedConverter());           // converts TPC_POLYTRACKS to TpcTrackSeed
   se->registerSubsystem(new TpcPolyClusterTrkrClusterConverter());  // converts TPC_POLYCLUSTERS to TRKR_CLUSTER
 
@@ -373,14 +382,20 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   se->registerSubsystem(finder);
 
   auto *resid = new TrackResiduals("TrackResiduals");
-  resid->outfileName(outdir + "/TrackResiduals_" + outfilename + "_" + std::to_string(runnumber) + "_" + std::to_string(segment) + ".root");
+  resid->outfileName(outdir + "/outout_resid/TrackResiduals_" + outfilename + "_" + std::to_string(runnumber) + "_" + std::to_string(segment) + ".root");
   resid->alignment(false);
-  resid->clusterTree();
+  //resid->clusterTree();
   resid->vertexTree();
-  resid->hitTree();
+  //resid->hitTree();
   resid->convertSeeds(G4TRACKING::convert_seeds_to_svtxtracks);
   resid->Verbosity(0);
   se->registerSubsystem(resid);
+
+  auto *polyresid = new Tpc_PolyClusterResiduals("Tpc_PolyClusterResiduals",
+					    outdir + "/outout_resid/tpc_poly_track_residuals"+ outfilename + "_" + std::to_string(runnumber) + std::to_string(segment) + ".root" );
+  polyresid->setMinPt(0);
+  polyresid->setMinTpcClusters(20);
+  se->registerSubsystem(polyresid);
 
   Fun4AllOutputManager *out = new Fun4AllDstOutputManager("out", Form("%s/output_DST/DST_%s_%s_%s-%d-%d.root", outdir.c_str(), dsttype_to_save.c_str(), collision.c_str(), production.c_str(), runnumber, segment));
 
@@ -395,8 +410,14 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   out->AddNode("TPC_POLYTRACKS");
   out->AddNode("TPC_POLYTRACKVERTICES");
   out->AddNode("TRKR_CLUSTER");
+  out->AddNode("TRKR_CLUSTER");
+  out->AddNode("SvtxTrackSeedContainer");
+  out->AddNode("SvtxTrackMap");
+  out->AddNode("SvtxVertexMap");
+  out->AddNode("TpcTrackSeedContainer");
+  out->AddNode("SiliconTrackSeedContainer");
 
-  // se->registerOutputManager(out);
+   //se->registerOutputManager(out);
 
   se->run(nEvents + nSkip);
   se->Print("NODETREE");
