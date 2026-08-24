@@ -12,12 +12,16 @@ source /sphenix/u/mitrankova/.login_PR_TPC_SA
 nEvents="$1"
 
 
-
+#runnumber=79528
 runnumber=79513
 collision="run3pp"
 cdbtag="ana532_nocdbtag_v001"
-OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ElectricField_3d
-name="79513_3d"
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ElectricField_Test_Frame
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79528_3D_Map_375V_ibf
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_RawHitQA
+OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc
+name="HITS_6x6_1mrad_AuAu"
 
 #runnumber=76905
 #collision="run3auau"

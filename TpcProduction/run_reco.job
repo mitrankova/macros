@@ -3,11 +3,11 @@ Initialdir         = /sphenix/user/mitrankova/macros/TpcProduction
 Executable         = $(Initialdir)/run_reco.sh
 #Output            = /sphenix/user/mitrankova/macros/TpcProduction/log/pp_TpcReco_$(process).out
 #Error             = /sphenix/user/mitrankova/macros/TpcProduction/log/pp_TpcReco_$(process).err
-Log                = /sphenix/user/mitrankova/macros/TpcProduction/log/pp_TpcReco_$(process).log
+Log                = /tmp/poly_pp_TpcReco_$(process).log
 PeriodicHold       = (NumJobStarts>=1 && JobStatus == 1)
-request_memory     = 4GB
-#request_cpus       = 3
+request_memory     = 8GB
+request_cpus       = 3
 Priority           = 20
 job_lease_duration = 3600
 Arguments          = 100 $(process) 0
-Queue 1000
+Queue 100

@@ -302,9 +302,8 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
  
   auto *cluster = new Tpc_PolyClusterizer(); // makes TPC_POLYCLUSTERS
  
-  cluster->setKEffSide0(1.1);//OO 82626 - 4.5, AuAu 6x6 76905 -0, pp 79513 - 1.0, 75391 5.8 75405 4.8
-  cluster->setKEffSide1(1.75);//OO 82626 - 5.0, AuAu 6x6 76905 -0, pp 79513 - 1.6, 75391 5.6 75408 4.8
-
+  cluster->setField3DCoefficientFile("/sphenix/user/mitrankova/macros/TpcProduction/tpc_field3d_coefficients.root");
+  cluster->setCMVoltageDefault(375.0);
   se->registerSubsystem(cluster);
 
   se->registerSubsystem(new Tpc_PolyTrackReco());      // makes TPC_POLYTRACKS
@@ -325,6 +324,8 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   resid->setMinPt(0);
   resid->setMinTpcClusters(20);
   se->registerSubsystem(resid);
+
+
 
   Fun4AllOutputManager *out = new Fun4AllDstOutputManager("out", std::format("{}/output_DST/DST_{}_{}_{}-{:08d}-{:05d}.root",outdir, dsttype_to_save, collision, production, runnumber, segment));
 
