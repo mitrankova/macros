@@ -44,6 +44,7 @@
 #include <tpctrackreco/Tpc_PolyClusterizer.h>
 #include <tpctrackreco/Tpc_PolyTrackReco.h>
 #include <tpctrackreco/Tpc_PolyTrackVertexer.h>
+#include <trackingqa/TpcClusterQA.h>
 
 
 #include <trackingdiagnostics/Tpc_AssembledTrackDisplay.h>
@@ -103,14 +104,14 @@ class SkipFirstN : public SubsysReco
 //.x Fun4All_raw_hit_TPC_reco.C(2, 82626, 0, ".", 0, "run3oo", "ana537_nocdbtag_v001","HITS_OO")
 
 void Fun4All_raw_hit_TPC_Matched_reco(
-    const int nEvents = 10,
+    const int nEvents = 2,
     const int runnumber = 79513,
     const int segment = 0,
     const std::string &outdir = ".",
     const int nSkip = 0,
     const std::string &collision = "run3pp",
     const std::string &production = "ana532_nocdbtag_v001",
-    const std::string &outfilename = "ppFieldOn",
+    const std::string &outfilename = "ppFieldOn_STANDARD_5evts",
     const std::string &datatype = "physics")
 {
   const bool convertSeeds = false;
@@ -209,7 +210,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
 
   Enable::QA = false;
   Enable::CDB = true;
-  rc->set_StringFlag("CDB_GLOBALTAG", "newcdbtag");
+  rc->set_StringFlag("CDB_GLOBALTAG", "newcdbtag");//  TpcSurvey
   rc->set_uint64Flag("TIMESTAMP", runnumber);
 
   G4TRACKING::convert_seeds_to_svtxtracks = convertSeeds;
@@ -242,7 +243,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
 
   for (int felix = 0; felix < 6; felix++)
   {
-    //Mvtx_HitUnpacking(std::to_string(felix));
+    Mvtx_HitUnpacking(std::to_string(felix));
   }
   for (int server = 0; server < 8; server++)
   {
@@ -303,29 +304,33 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   se->registerSubsystem(new Tpc_AssembledTrackReco());  // makes TPC_ASSEMBLEDTRACKS
 
   auto *crossingFinder = new TpcCrossingFinder();
-  crossingFinder->Verbosity(10);
+  crossingFinder->Verbosity(0);
+  //crossingFinder->setUseSiSeedCrossing(true);
   crossingFinder->setInputNodeName("TPC_ASSEMBLEDTRACKS");
   crossingFinder->setOutputNodeName("TPC_CROSSING_DECISIONS");
   crossingFinder->setVertexMapNodeName("SiliconSvtxVertexMap");  // optional, configurable
   se->registerSubsystem(crossingFinder);
 
   auto *cluster = new Tpc_PolyClusterizer();  // makes TPC_POLYCLUSTERS
-  cluster->setUseSurveyGeometry(false);
-  cluster->Verbosity(10);
+  cluster->setUseSurveyGeometry(true);
+  cluster->Verbosity(0);
+  //cluster->setDuplicateCrossingHypotheses(true); //true
   cluster->setMaxAcceptedTier(2);
-  cluster->setKEffSide0(1.00);  // OO 82626 - 4.5, AuAu 6x6 76905 -0, pp 79513 - 1.0, 75391 5.8 75405 4.8
-  cluster->setKEffSide1(1.60);  // OO 82626 - 5.0, AuAu 6x6 76905 -0, pp 79513 - 1.6, 75391 5.6 75408 4.8
+  cluster->setCMVoltageDefault(376.85); // 375 default
   se->registerSubsystem(cluster);
 
 
   se->registerSubsystem(new Tpc_PolyTrackReco());      // makes TPC_POLYTRACKS
   se->registerSubsystem(new Tpc_PolyTrackVertexer());  // makes TPC_POLYTRACKVERTICES
 
-  se->registerSubsystem(new Tpc_PolyClusterDisplay("Tpc_PolyClusterDisplay", "tpc_poly_cluster_display_" + outfilename + "_" + std::to_string(runnumber) + ".root"));
+ // se->registerSubsystem(new Tpc_PolyClusterDisplay("Tpc_PolyClusterDisplay", "tpc_poly_cluster_display_" + outfilename + "_" + std::to_string(runnumber) + ".root"));
 
 //==========================================================================
   se->registerSubsystem(new TpcPolyTrackSeedConverter());           // converts TPC_POLYTRACKS to TpcTrackSeed
-  se->registerSubsystem(new TpcPolyClusterTrkrClusterConverter());  // converts TPC_POLYCLUSTERS to TRKR_CLUSTER
+ // se->registerSubsystem(new TpcPolyClusterTrkrClusterConverter());  // converts TPC_POLYCLUSTERS to TRKR_CLUSTER
+  auto *clusterconvert = new TpcPolyClusterTrkrClusterConverter();
+  //clusterconvert->setFillClusterHitAssoc(true);
+  se->registerSubsystem(clusterconvert);
 
   auto *silicon_match = new PHSiliconTpcTrackMatching;
   silicon_match->Verbosity(0);
@@ -342,7 +347,8 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   silicon_match->set_crossing_deltaz_max(10);
   silicon_match->set_crossing_deltaz_min(0);
   silicon_match->set_test_windows_printout(false);
-  silicon_match->set_use_tpc_crossing(true);  // use crossing information from TPC SA seed
+  //silicon_match->set_use_tpc_crossing_only(true);  // use crossing information from TPC SA seed
+  silicon_match->set_max_crossing_diff(10); 
   se->registerSubsystem(silicon_match);
 
   auto *deltazcorr = new PHTpcDeltaZCorrection;
@@ -372,7 +378,8 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   auto *finder = new PHSimpleVertexFinder("SvtxVertexFinder");
   finder->Verbosity(0);
   finder->setDcaCut(0.1);
-  finder->setTrackPtCut(0.2);
+  //finder->setTrackPtCut(0.2);
+  finder->setTrackPtCut(0.1);
   finder->setBeamLineCut(1);
   finder->setTrackQualityCut(500);
   finder->setNmvtxRequired(3);
@@ -395,7 +402,7 @@ void Fun4All_raw_hit_TPC_Matched_reco(
 					    outdir + "/outout_resid/tpc_poly_track_residuals"+ outfilename + "_" + std::to_string(runnumber) + std::to_string(segment) + ".root" );
   polyresid->setMinPt(0);
   polyresid->setMinTpcClusters(20);
-  se->registerSubsystem(polyresid);
+  //se->registerSubsystem(polyresid);
 
   Fun4AllOutputManager *out = new Fun4AllDstOutputManager("out", Form("%s/output_DST/DST_%s_%s_%s-%d-%d.root", outdir.c_str(), dsttype_to_save.c_str(), collision.c_str(), production.c_str(), runnumber, segment));
 
@@ -418,6 +425,11 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   out->AddNode("SiliconTrackSeedContainer");
 
    //se->registerOutputManager(out);
+   Enable::QA = false;
+  if (Enable::QA)
+  {
+    se->registerSubsystem(new TpcClusterQA);
+  }
 
   se->run(nEvents + nSkip);
   se->Print("NODETREE");
@@ -425,6 +437,13 @@ void Fun4All_raw_hit_TPC_Matched_reco(
   se->PrintTimer();
 
   CDBInterface::instance()->Print();
+
+  if (Enable::QA)
+  {
+    std::string qaOutputFileName = outdir + "/QA/tpc_poly_cluster_"+ outfilename + "_" + std::to_string(runnumber) + std::to_string(segment) + "_qa.root";
+    QAHistManagerDef::saveQARootFile(qaOutputFileName);
+  }
+
   delete se;
   std::cout << "Finished" << std::endl;
   gSystem->Exit(0);

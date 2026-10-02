@@ -6,7 +6,8 @@ export HOME=/sphenix/u/${LOGNAME}
 
 #source /opt/sphenix/core/bin/sphenix_setup.sh new
 #source /sphenix/u/mitrankova/.login_TPC_SA
-source /sphenix/u/mitrankova/.login_PR_TPC_SA
+#source /sphenix/u/mitrankova/.login_PR_TPC_SA
+source /sphenix/u/mitrankova/.login_Crossing_Dubl
 #printenv
 
 nEvents="$1"
@@ -16,8 +17,8 @@ nEvents="$1"
 runnumber=79513
 collision="run3pp"
 cdbtag="ana532_nocdbtag_v001"
-OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_TPC_SA_Matched
-name="TPC_SA_Matched"
+OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_TPC_SA_Matched_Double_cross
+name="pp_20zmatch"
 
 #runnumber=76905
 #collision="run3auau"

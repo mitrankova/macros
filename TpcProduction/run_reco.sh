@@ -6,7 +6,8 @@ export HOME=/sphenix/u/${LOGNAME}
 
 #source /opt/sphenix/core/bin/sphenix_setup.sh new
 #source /sphenix/u/mitrankova/.login_TPC_SA
-source /sphenix/u/mitrankova/.login_PR_TPC_SA
+#source /sphenix/u/mitrankova/.login_PR_TPC_SA
+source /sphenix/u/mitrankova/.login_Hits_Data
 #printenv
 
 nEvents="$1"
@@ -16,17 +17,21 @@ nEvents="$1"
 runnumber=79513
 collision="run3pp"
 cdbtag="ana532_nocdbtag_v001"
+
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ElectricField_Test_Frame
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79528_3D_Map_375V_ibf
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_RawHitQA
-OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc
-name="HITS_6x6_1mrad_AuAu"
+
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc
+OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_HITS_DATA
+name="HITS_pp"
 
 #runnumber=76905
 #collision="run3auau"
 #cdbtag="ana514_nocdbtag_v001"
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/PatternReco/76905_new_8_380_no_mv_rot_Btest
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_ifc_auau
 #name="HITS_6x6_1mrad_AuAu"
 
 #runnumber=82626

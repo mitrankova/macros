@@ -30,6 +30,8 @@
 #include <trackingdiagnostics/Tpc_AssembledTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterResiduals.h>
+#include <polytrackhits/Tpc_PolyTrackHits.h>
+
 //#include <PHGarfieldPolyResidualQA.h>
 
 #include <cdbobjects/CDBTTree.h>
@@ -63,7 +65,7 @@ R__LOAD_LIBRARY(libmicromegas.so)
 R__LOAD_LIBRARY(libPHGarfield.so)
 R__LOAD_LIBRARY(libtpctrackreco.so)
 R__LOAD_LIBRARY(libTrackingDiagnostics.so)
-//R__LOAD_LIBRARY(libPHGarfieldCalibrationQA.so)
+R__LOAD_LIBRARY(libPolyTrackHits.so)
 
 
 class SkipFirstN : public SubsysReco {
@@ -77,6 +79,8 @@ class SkipFirstN : public SubsysReco {
   int target_ = 0;
   int count_  = 0;
 };
+
+//
 // 'Golden' store of p+p
 //.x Fun4All_raw_hit_TPC_reco.C(2, 79513, 0, ".", 0, "run3pp", "ana532_nocdbtag_v001","HITS_ppFieldOn")
 //.x Fun4All_raw_hit_TPC_reco.C(2, 79516, 0, ".", 0, "run3pp", "ana532_nocdbtag_v001","HITS_ppFieldOn")
@@ -85,11 +89,13 @@ class SkipFirstN : public SubsysReco {
 //.x Fun4All_raw_hit_TPC_reco.C(10, 75570, 0, ".", 0, "run3auau", "ana514_nocdbtag_v001","HITS_AuAu_ZeroField_1mrad")
 //.x Fun4All_raw_hit_TPC_reco.C(10, 75574, 0, ".", 0, "run3auau", "ana514_nocdbtag_v001","HITS_AuAu_ZeroField_0mrad")
 
+//.x Fun4All_raw_hit_TPC_reco.C(2, 76905, 0, ".", 0, "run3auau", "ana514_nocdbtag_v001","HITS_6x6_1mrad_AuAu")
+
 //111x111 O+O
-//.x Fun4All_raw_hit_TPC_reco.C(2, 82626, 0, ".", 0, "run3oo", "ana537_nocdbtag_v001","HITS_OO")
+//.x Fun4All_raw_hit_TPC_reco.C(3, 82525, 0, ".", 0, "run3oo", "ana537_nocdbtag_v001","HITS_OO")
 
 void Fun4All_raw_hit_TPC_reco(
-    const int nEvents = 2,
+    const int nEvents = 5,
     const int runnumber = 79513,
     const int segment = 0,
     const std::string& outdir = ".",
@@ -191,7 +197,7 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
 
   Enable::QA = false;
   Enable::CDB = true;
-  //QAHistManagerDef::getHistoManager();
+    //QAHistManagerDef::getHistoManager();
   rc->set_StringFlag("CDB_GLOBALTAG", "newcdbtag");
   rc->set_uint64Flag("TIMESTAMP", runnumber);
 
@@ -250,6 +256,7 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   }
 
 
+
   Micromegas_HitUnpacking();
   //==============================================================
 
@@ -293,7 +300,7 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   se->registerSubsystem(new Tpc_AssembledTrackReco()); // makes TPC_ASSEMBLEDTRACKS
 
    auto *crossingFinder = new TpcCrossingFinder();
-  crossingFinder->Verbosity(0);
+  crossingFinder->Verbosity(00);
   crossingFinder->setInputNodeName("TPC_ASSEMBLEDTRACKS");
   crossingFinder->setOutputNodeName("TPC_CROSSING_DECISIONS");
   crossingFinder->setVertexMapNodeName("SiliconSvtxVertexMap");  // optional, configurable
@@ -301,9 +308,6 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
 
  
   auto *cluster = new Tpc_PolyClusterizer(); // makes TPC_POLYCLUSTERS
- 
-  cluster->setField3DCoefficientFile("/sphenix/user/mitrankova/macros/TpcProduction/tpc_field3d_coefficients.root");
-  cluster->setCMVoltageDefault(375.0);
   se->registerSubsystem(cluster);
 
   se->registerSubsystem(new Tpc_PolyTrackReco());      // makes TPC_POLYTRACKS
@@ -320,14 +324,18 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   
   //For the  residual tree output uncomment following block (options to put cuts on minimum pT and minimum number of clusters in TPC SA are available)
   auto *resid = new Tpc_PolyClusterResiduals("Tpc_PolyClusterResiduals",
-					    outdir + "/outout_resid/tpc_poly_track_residuals"+ outfilename + "_" + std::to_string(runnumber) + std::to_string(segment) + ".root" );
+					    outdir + "/outout_resid/tpc_poly_track_residuals"+ outfilename + "_" + std::to_string(runnumber) +"_"+ std::to_string(segment) + ".root" );
   resid->setMinPt(0);
   resid->setMinTpcClusters(20);
-  se->registerSubsystem(resid);
+ // se->registerSubsystem(resid);
+  
+auto polyHitTree = new Tpc_PolyTrackHits(  "Tpc_PolyTrackHits",   outdir +  "/tpc_polytrack_hits_run3pp_"+std::to_string(runnumber)+"_"+std::to_string(segment)+"_"+std::to_string(nEvents) +"evts_"+std::to_string(nSkip) +"nskip.root");
+polyHitTree->setMinPt(0.1);
+polyHitTree->setMinTpcClusters(10);
 
+se->registerSubsystem(polyHitTree);
 
-
-  Fun4AllOutputManager *out = new Fun4AllDstOutputManager("out", std::format("{}/output_DST/DST_{}_{}_{}-{:08d}-{:05d}.root",outdir, dsttype_to_save, collision, production, runnumber, segment));
+   Fun4AllOutputManager *out = new Fun4AllDstOutputManager("out", std::format("{}/output_DST/DST_{}_{}_{}-{:08d}-{:05d}.root",outdir, dsttype_to_save, collision, production, runnumber, segment));
 
   out->AddNode("Sync");
   out->AddNode("EventHeader");
@@ -341,9 +349,9 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   out->AddNode("TPC_CROSSING_DECISIONS");
   out->AddNode("TRKR_CLUSTER");
 
-  se->registerOutputManager(out);
+  //se->registerOutputManager(out);
   
-  se->run(nEvents+nSkip);
+  se->run(nEvents);
   se->Print("NODETREE");
 
   se->End();
@@ -352,7 +360,7 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
 
   CDBInterface::instance()->Print();
 
-  
+
   delete se;
   std::cout << "Finished" << std::endl;
   gSystem->Exit(0);

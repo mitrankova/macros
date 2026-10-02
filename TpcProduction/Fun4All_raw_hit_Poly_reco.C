@@ -26,12 +26,16 @@
 #include <tpctrackreco/Tpc_PolyTrackVertexer.h>
 #include <tpctrackreco/Tpc_PolyClusterizer.h>
 #include <tpctrackreco/Full_PolyTrackMatcher.h>
+#include <tpctrackreco/Full_PolyTrackReco.h>
+#include <tpctrackreco/TpcSiliconCrossingRefiner.h>
+#include <tpctrackreco/TpcCrossingClusterCorrector.h>
 
 #include <trackingdiagnostics/Tpc_ModuleTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_AssembledTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterDisplay.h>
 #include <trackingdiagnostics/Full_PolyTrackDisplay.h>
 #include <trackingdiagnostics/Tpc_PolyClusterResiduals.h>
+#include <trackingdiagnostics/Full_PolyClusterResiduals.h>
 //#include <PHGarfieldPolyResidualQA.h>
 
 #include <cdbobjects/CDBTTree.h>
@@ -89,6 +93,11 @@ class SkipFirstN : public SubsysReco {
 
 //111x111 O+O
 //.x Fun4All_raw_hit_TPC_reco.C(2, 82626, 0, ".", 0, "run3oo", "ana537_nocdbtag_v001","HITS_OO")
+
+
+//.x Fun4All_raw_hit_Poly_reco.C(2,76905,0,".",0,"run3auau","ana514_nocdbtag_v001","HITS_6x6_1mrad_AuAu" )
+
+
 
 void Fun4All_raw_hit_Poly_reco(
     const int nEvents = 2,
@@ -299,13 +308,15 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   crossingFinder->setInputNodeName("TPC_ASSEMBLEDTRACKS");
   crossingFinder->setOutputNodeName("TPC_CROSSING_DECISIONS");
   crossingFinder->setVertexMapNodeName("SiliconSvtxVertexMap");  // optional, configurable
+  crossingFinder->setTriggeredMode(false);
+  crossingFinder->setUseSiSeedCrossing(true);
   se->registerSubsystem(crossingFinder);
 
  
   auto *cluster = new Tpc_PolyClusterizer(); // makes TPC_POLYCLUSTERS
  
-  cluster->setKEffSide0(0.9+0.15);//OO 82626 - 4.5, AuAu 6x6 76905 -0, pp 79513 - 1.0, 75391 5.8 75405 4.8
-  cluster->setKEffSide1(1.5+0.15);//OO 82626 - 5.0, AuAu 6x6 76905 -0, pp 79513 - 1.6, 75391 5.6 75408 4.8
+  //cluster->setKEffSide0(0.9+0.15);//OO 82626 - 4.5, AuAu 6x6 76905 -0, pp 79513 - 1.0, 75391 5.8 75405 4.8
+  //cluster->setKEffSide1(1.5+0.15);//OO 82626 - 5.0, AuAu 6x6 76905 -0, pp 79513 - 1.6, 75391 5.6 75408 4.8
   cluster->setCMVoltageDefault(375.0);
   se->registerSubsystem(cluster);
 
@@ -313,21 +324,39 @@ if(collision!="run3line_laser"&&collision!="run3cosmics")
   se->registerSubsystem(new Tpc_PolyTrackVertexer());  // makes TPC_POLYTRACKVERTICES
 
   auto matcher = new Full_PolyTrackMatcher();
-  matcher->setLooseWindow(1.0, 5.0);
-  matcher->setResidualSigma(0.15, 1.0);
+  const double matcher_theta_window_sigma = 3.0;
   matcher->setWriteQA(true);
+  matcher->Verbosity(10);
   matcher->setQAFileName(outdir + "/MatchQA_" + outfilename + "_" + std::to_string(runnumber)  + std::to_string(segment) + ".root");
-
+  matcher->setAssociationCalibrationMode(false);
+   matcher->setPhiThetaWindowSigma(3.0, 3.0);
+   //matcher->setInttDzWindow(0.25);
+  
   se->registerSubsystem(matcher);
+
+ // se->registerSubsystem(new Full_PolyTrackReco()); 
+ // se->registerSubsystem(new Full_PolyClusterResiduals("Full_PolyClusterResiduals",
+//					    outdir + "/outout_resid/full_poly_track_residuals"+ outfilename + "_" + std::to_string(runnumber) + std::to_string(segment) + ".root" )); 
+se->registerSubsystem(new TpcSiliconCrossingRefiner());
+
+auto* corrector = new TpcCrossingClusterCorrector();
+se->registerSubsystem(corrector);
 
   auto display = new Full_PolyTrackDisplay("Full_PolyTrackDisplay", "full_poly_track_display_" + outfilename + "_" + std::to_string(runnumber) + ".root");
   //display->setZRange(-15, 15);
   //display->setXYRange(20);
-  display->setDrawTrackLines(true);
+  display->setDrawTrackLines(true);//true
   display->setMinMvtxHits(2);
   display->setDrawUnusedSiliconSeeds(false);
+  display->setDrawFullPolyTrackRecoFit(false);
 
-  //se->registerSubsystem(display);
+  display->setTpc_PolyClusterNodeName(
+    "TPC_POLYCLUSTERS_CROSSING_CORRECTED");
+
+display->setCrossingDecisionNodeName(
+    "TPC_SILICON_CROSSING_DECISIONS");
+
+  se->registerSubsystem(display);
 
   //For the module tracks display uncomment following line
   //se->registerSubsystem(new Tpc_ModuleTrackDisplay("Tpc_ModuleTrackDisplay", "tpc_moduletrack_display_" + outfilename + "_" + to_string(runnumber) + ".root"));

@@ -17,14 +17,17 @@ runnumber=79513
 collision="run3pp"
 cdbtag="ana532_nocdbtag_v001"
 OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_Match_QA
+name="pp"
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79528_3D_Map_375V_ibf
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_DC_Map_375V_ibf
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/79513_RawHitQA
-name="79513_3"
+
+
 
 #runnumber=76905
 #collision="run3auau"
 #cdbtag="ana514_nocdbtag_v001"
+#OutDir=/sphenix/tg/tg01/hf/mitrankova/76905_Match_QA_AuAu
 #OutDir=/sphenix/tg/tg01/hf/mitrankova/PatternReco/76905_new_8_380_no_mv_rot_Btest
 #name="HITS_6x6_1mrad_AuAu"
 

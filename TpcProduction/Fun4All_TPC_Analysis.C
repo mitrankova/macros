@@ -81,8 +81,8 @@ void Fun4All_TPC_Analysis(
 
 
   const std::string dsttype = "TPC";
-  std::string filename = indir+"/DST_"+dsttype+"_"+collision+"_"+production+"-"+std::to_string(runnumber)+"-"+std::to_string(segment)+".root";
-
+  //std::string filename = indir+"/DST_"+dsttype+"_"+collision+"_"+production+"-"+std::to_string(runnumber)+"-"+std::to_string(segment)+".root";
+  std::string filename = "/sphenix/user/jdosbo/git/sphenix/prodmacros/run3pp/tracking_code/out-00079513-00001.root";
   auto *hitsinclus = new Fun4AllDstInputManager("TpcInputManager");
   hitsinclus->fileopen(filename);
   se->registerInputManager(hitsinclus);
@@ -114,7 +114,7 @@ void Fun4All_TPC_Analysis(
 
 
   //For the module tracks display uncomment following line
-  se->registerSubsystem(new Tpc_ModuleTrackDisplay("Tpc_ModuleTrackDisplay", "tpc_moduletrack_display_" + outfilename + "_" + std::to_string(runnumber) + ".root"));
+  //se->registerSubsystem(new Tpc_ModuleTrackDisplay("Tpc_ModuleTrackDisplay", "tpc_moduletrack_display_" + outfilename + "_" + std::to_string(runnumber) + ".root"));
   
   //For the assembled tracks display uncomment following line
   //se->registerSubsystem(new Tpc_AssembledTrackDisplay("Tpc_AssembledTrackDisplay", "tpc_assembledtrack_display_" + outfilename + "_" + to_string(runnumber) + ".root"));
